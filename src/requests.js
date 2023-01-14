@@ -1,4 +1,4 @@
-<!--
+/*
  * Copyright (C) 2023 Eric Roy
  *
  * This program is free software: you can redistribute it and/or modify it
@@ -13,7 +13,11 @@
  *
  * You should have received a copy of the GNU General Public License along with
  * this program. If not, see http://www.gnu.org/licenses/.
--->
+*/
 
-# svnjs
-A Subversion client for the web!
+if (typeof svnjs === "undefined")
+    svnjs = {};
+
+svnjs._requests = {
+    
+};
