@@ -114,7 +114,7 @@ if (typeof svnjs === "undefined")
                         this._commit_done=true;
                         resolve()
                     },
-                })
+                });
             });
         }
 

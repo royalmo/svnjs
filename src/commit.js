@@ -34,108 +34,52 @@ if (typeof svnjs === "undefined")
     svnjs._commit = function (opts) {
         var webdav = svnjs._WebDav(opts);
 
+        var parsed_message = { set : { log : message } };
+
         webdav.req_options()
         .then(() => webdav.req_propfind())
         .then(() => webdav.req_mkactivity())
         .then(() => webdav.req_checkout())
-        /*
-        OPTIONS
-        PROPFIND
-        MKACTIVITY
-        CHECKOUT
-        PROPPATCH
-
-
-        MERGE
-        */
+        .then(() => webdav.req_proppatch(props=parsed_message))
+        .then(() => {
+            return new Promise ( (resolve, reject) => {
+                perform_tasks(webdav, tasks, resolve, reject);
+            });       
+        })
+        .then(() => webdav.req_merge())
+        .then(resolve)
+        .catch(reject);
     };
 
+    perform_tasks = function(webdav, tasks, resolve, reject) {
+        var current_task = tasks.shift();
+        var method = current_task.method;
+        var params = current_task.params;
+        var checkout_url = params[0];
+
+        dav.CHECKOUT(url)
+        .then( () => {
+            var func;
+            switch (method) {
+                case "PUT":
+                    webdav.req_put
+                    break;
+
+                default:
+                    console.warn(method);
+                    break;
+            }
+            return func(params);
+        })
+        .then( () => {
+            if (tasks.length > 0) {
+                perform_tasks(webdav, tasks, resolve, reject);
+            }
+            else {
+                resolve();
+            }
+        })
+        .catch(reject);
+    }
+
 })()
-
-///////////////////////////////////////////////////////////////
-
-_patchLog: function () {
-    var self = this;
-    var dav = self.dav;
-    var message = self.message;
-    dav.PROPPATCH(dav.cko, {
-        set: {
-            log: message
-        }
-    }, function () {
-        self._process();
-    }, function () {
-        self.err && self.err();
-    });
-},
-_process: function () {
-    var self = this;
-    var dav = self.dav;
-    var handler = self.handlers.shift();
-    var method = handler.method;
-    var params = handler.params;
-    params.push(function () {
-        if (self.handlers.length)
-            self._process();
-        else
-            self._merge();
-    }, function () {
-        self.err && self.err();
-    });
-    var url = self._getCheckoutUrl(method, params[0]);
-    dav.CHECKOUT(url, function () {
-        if (method == 'COPY')
-            return self._prepareCopy(params);
-        if (method == 'PROPPATCH')
-            params[0] = dav.cko;
-        else if (method == 'MKCOL')
-            params[0] = dav.cko + '/' + params[0];
-        dav[method].apply(dav, params);
-    }, function () {
-        self.err && self.err();
-    });
-},
-_prepareCopy: function (params) {
-    var self = this;
-    var dav = self.dav;
-    var path = params[1];
-    var success = params[2];
-    dav.PROPFIND(path, function () {
-        dav.PROPFIND(dav.vcc, function (stat, statstr, cont) {
-            var rbc = /:baseline-collection><D:href>([^<]+)<\/D/;
-            var rbr = /:baseline-ralative-path>([^<]+)<\//;
-            var topath = params[0];
-            topath = dav.cko + '/' + (topath == './' ? '' : topath);
-            path = cont.match(rbc)[1] +
-                   cont.match(rbr)[1] + '/' + path;
-            dav.COPY(path, topath, success);
-        }//, ['<D:prop><D:baseline-collection xmlns="DAV:"/>',
-          //  '<D:version-name xmlns="DAV:"/></D:prop>'
-          // ].join('')
-        );
-    });
-},
-_getCheckoutUrl: function (method, path) {
-    var dav = this.dav;
-    var url = dav.cki;
-    if (path == './' && method == 'COPY')
-        return dav.cki;
-    var pos = path.indexOf('/');
-    if (method == 'PROPPATCH' || pos > -1)
-        url += '/' + path;
-    return url;
-},
-_merge: function () {
-    var self = this;
-    var dav = self.dav;
-    dav.MERGE(function () {
-        dav.log('ALL DONE!');
-        dav.log('================================================');
-        self.ok && self.ok();
-    }, function () {
-        self.err && self.err();
-    });
-}
-
-
-
