@@ -15,6 +15,8 @@
  * this program. If not, see http://www.gnu.org/licenses/.
 */
 
+"use strict";
+
 if (typeof svnjs === "undefined")
     svnjs = {};
 
@@ -28,19 +30,15 @@ if (typeof svnjs === "undefined")
     // - success : func()
     // - error : func()
     // - progress : func(msg : string, percent : int)
-    var auth, base, msg, handlers, success, error, progress, current_task, background_ajax;
 
     svnjs._commit = function (opts) {
-        auth = 'Basic ' + opts.auth;
-        base = opts.base;
-        msg = opts.msg;
-        handlers = opts.handlers;
-        success = opts.success;
-        error = opts.error;
-        progress = opts.progress;
-        background_ajax = opts.background_ajax;
-        current_task = 0;
+        var webdav = svnjs._WebDav(opts);
 
+        webdav.req_options()
+        .then(() => webdav.req_propfind())
+        .then(() => webdav.req_mkactivity())
+        .then(() => webdav.req_checkout())
+        /*
         OPTIONS
         PROPFIND
         MKACTIVITY
@@ -49,45 +47,13 @@ if (typeof svnjs === "undefined")
 
 
         MERGE
+        */
     };
 
 })()
 
 ///////////////////////////////////////////////////////////////
 
-
-commit: function (message, ok, err) {
-    var self = this;
-    var dav = self.dav;
-    self.message = message;
-    self.ok = ok;
-    self.err = err;
-    dav.log('================================================');
-    dav.OPTIONS(function () {
-        dav.PROPFIND(dav.base, function (stat) {
-            if (stat == '207')
-                self._mkAct();
-            else
-                self.err && self.err();
-        });
-    }, () => {
-        console.error("SVNJS: Wrong repository ID or credentials (401 Unauthorized).");
-        self.err && self.err();
-    });
-},
-_mkAct: function () {
-    var self = this;
-    var dav = self.dav;
-    dav.MKACTIVITY(function () {
-        dav.CHECKOUT(dav.vcc, function () {
-            self._patchLog();
-        }, function () {
-            self.err && self.err();
-        });
-    }, function () {
-        self.err && self.err();
-    });
-},
 _patchLog: function () {
     var self = this;
     var dav = self.dav;

@@ -15,6 +15,8 @@
  * this program. If not, see http://www.gnu.org/licenses/.
 */
 
+"use strict";
+
 chrome.runtime.onMessage.addListener(
     function(request, sender, sendResponse) {
         if (request.contentScriptQuery == "SVNJSrequest") {

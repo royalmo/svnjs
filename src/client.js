@@ -38,44 +38,44 @@ if (typeof svnjs === "undefined")
         }
 
         add (path, content) {
-            _fail_if_commited();
+            this._fail_if_commited();
             this._handlers.push({
                 method: 'PUT',
                 params: [path, content]
             });
         }
         del (path) {
-            _fail_if_commited();
+            this._fail_if_commited();
             this._handlers.push({
                 method: 'DELETE',
                 params: [path]
             });
         }
         copy (path, topath) {
-            _fail_if_commited();
-            _fail_no_implemented("Copy");
+            this._fail_if_commited();
+            this._fail_no_implemented("Copy");
         }
         move (path, topath) {
-            _fail_if_commited();
-            _fail_no_implemented("Move");
+            this._fail_if_commited();
+            this._fail_no_implemented("Move");
         }
         lock () {
-            _fail_if_commited();
-            _fail_no_implemented("Lock");
+            this._fail_if_commited();
+            this._fail_no_implemented("Lock");
         }
         unlock () {
-            _fail_if_commited();
-            _fail_no_implemented("Unlock");
+            this._fail_if_commited();
+            this._fail_no_implemented("Unlock");
         }
         mkdir (name) {
-            _fail_if_commited();
+            this._fail_if_commited();
             this._handlers.push({
                 method: 'MKCOL',
                 params: [name]
             });
         }
         propset (path, props) {
-            _fail_if_commited();
+            this._fail_if_commited();
             this._handlers.push({
                 method: 'PROPPATCH',
                 params: [
@@ -84,7 +84,7 @@ if (typeof svnjs === "undefined")
             });
         }
         propdel (path, props) {
-            _fail_if_commited();
+            this._fail_if_commited();
             this._handlers.push({
                 method: 'PROPPATCH',
                 params: [
@@ -95,7 +95,7 @@ if (typeof svnjs === "undefined")
 
         // progress_function can be of type func(msg : string, percent : int)
         commit (commit_message, progress_function=_default_progress_function) {
-            _fail_if_commited();
+            this._fail_if_commited();
 
             if (this.tasks === 0) {
                 throw new svnjs.Error("Need at least 1 task to make a commit.");

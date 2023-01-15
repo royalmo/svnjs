@@ -15,6 +15,8 @@
  * this program. If not, see http://www.gnu.org/licenses/.
 */
 
+"use strict";
+
 if (typeof svnjs === "undefined")
     svnjs = {};
 

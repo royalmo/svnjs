@@ -15,6 +15,8 @@
  * this program. If not, see http://www.gnu.org/licenses/.
 */
 
+"use strict";
+
 if (typeof svnjs === "undefined")
     svnjs = {};
 
@@ -62,10 +64,7 @@ if (typeof svnjs === "undefined")
                 }
             })
             .then(response => {
-                var stat = response.status;
-                var cont = response.body;
-                var statstr = response.statusText;
-                resolve(stat, statstr, cont);
+                resolve(response);
             });
         });
     }
