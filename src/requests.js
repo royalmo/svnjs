@@ -168,7 +168,34 @@ if (typeof svnjs === "undefined")
             });
         }
 
-
+        req_proppatch (path=this.props.cko, props) {
+            var props = this._getProppatchXML(props.set, props.del);
+            return new Promise ((resolve, reject) =>  {
+                this.req_ajax({
+                    type: 'PROPPATCH',
+                    path: path,
+                    headers: {
+                        'Content-type': 'text/xml;charset=utf-8'
+                    },
+                    content: [
+                        '<?xml version="1.0" encoding="utf-8" ?>',
+                        '<D:propertyupdate xmlns:D="DAV:"',
+                        ' xmlns:V="http://subversion.tigris.org/xmlns/dav/"',
+                        ' xmlns:C="http://subversion.tigris.org/xmlns/custom/"', 
+                        ' xmlns:S="http://subversion.tigris.org/xmlns/svn/">',
+                        props,
+                        '</D:propertyupdate>'
+                    ].join('')
+                }).then(response => {
+                    if (response.status != 207) {
+                        this.rmact();
+                        reject("PROPPATCH", response);
+                        return;
+                    }
+                    resolve();
+                });
+            });
+        }
 
         _getProppatchXML (propset, propdel) {
             var xml = [];
@@ -194,6 +221,95 @@ if (typeof svnjs === "undefined")
                 xml.push('</D:remove>');
             }
             return xml.join('');
+        }
+
+        req_put (file, content) {
+            var path = this.cko.indexOf(file) != -1 ? this.cko :
+                this.cko + '/' + file;
+            return new Promise ((resolve, reject) => {
+                this.req_ajax({
+                    type : "PUT",
+                    path : path,
+                    headers: {
+                        'Content-type': 'text/plain'
+                    },
+                    content: content
+                }).then(response => {
+                    if (response.status < 200 || response.status >= 300) {
+                        this.rmact();
+                        reject("PUT", response);
+                        return;
+                    }
+                    resolve();
+                });
+            });
+        }
+
+        req_delete (file) {
+            var path = this.cko.indexOf(file) != -1 ? this.cko :
+                this.cko + '/' + file;
+            return new Promise ((resolve, reject) => {
+                this.req_ajax({
+                    type : "DELETE",
+                    path : path
+                }).then(response => {
+                    if (response.status < 200 || response.status >= 300) {
+                        this.rmact();
+                        reject("DELETE", response);
+                        return;
+                    }
+                    resolve();
+                });
+            });
+        }
+
+        req_mkcol (path) {
+            return new Promise ((resolve, reject) => {
+                this.req_ajax({
+                    type : "MKCOL",
+                    path : path
+                }).then(response => {
+                    if (response.status < 200 || response.status >= 300) {
+                        this.rmact();
+                        reject("MKCOL", response);
+                        return;
+                    }
+                    resolve();
+                });
+            });
+        }
+
+        req_merge () {
+            return new Promise ((resolve, reject) => {
+                this.req_ajax({
+                    type : "MERGE",
+                    path: this.act + this.uniqueKey,
+                    headers: {
+                        'X-SVN-Options': 'release-locks',
+                        'Content-type': 'text/xml;charset=utf-8'
+                    },
+                    content: [
+                        '<?xml version="1.0" encoding="utf-8"?>',
+                        '<D:merge xmlns:D="DAV:"><D:source>',
+                        '<D:href>', this.act, this.uniqueKey, '</D:href>',
+                        '</D:source><D:no-auto-merge/><D:no-checkout/>',
+                        '<D:prop><D:checked-in/><D:version-name/>',
+                        '<D:resourcetype/><D:creationdate/>',
+                        '<D:creator-displayname/></D:prop></D:merge>'
+                    ].join('')
+                }).then(response => {
+                    if (response.status != 200) {
+                        this.rmact();
+                        reject("MERGE", response);
+                        return;
+                    }
+                    resolve();
+                });
+            });
+        }
+
+        rmact () {
+            this.req_delete([this.act, this.unique_key]);
         }
 
     }
