@@ -34,7 +34,7 @@ if (typeof svnjs === "undefined")
     svnjs._commit = function (opts) {
         var webdav = svnjs._WebDav(opts);
 
-        var parsed_message = { set : { log : message } };
+        var parsed_message = { set : { log : opts.message } };
 
         webdav.req_options()
         .then(() => webdav.req_propfind())
@@ -43,12 +43,12 @@ if (typeof svnjs === "undefined")
         .then(() => webdav.req_proppatch(props=parsed_message))
         .then(() => {
             return new Promise ( (resolve, reject) => {
-                perform_tasks(webdav, tasks, resolve, reject);
+                perform_tasks(webdav, opts.handlers, resolve, reject);
             });       
         })
         .then(() => webdav.req_merge())
-        .then(resolve)
-        .catch(reject);
+        .then(opts.resolve)
+        .catch(opts.reject);
     };
 
     perform_tasks = function(webdav, tasks, resolve, reject) {
@@ -57,7 +57,7 @@ if (typeof svnjs === "undefined")
         var params = current_task.params;
         var checkout_url = params[0];
 
-        dav.CHECKOUT(url)
+        dav.CHECKOUT(checkout_url)
         .then( () => {
             var func;
             switch (method) {
